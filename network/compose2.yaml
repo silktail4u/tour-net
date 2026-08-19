@@ -1,0 +1,63 @@
+services:
+
+  router:
+    image: alpine:latest
+    container_name: event-router
+
+    network_mode: host
+    privileged: true
+
+    restart: unless-stopped
+
+    environment:
+      WAN_IF: wlan0
+      LAN_IF: wlan1
+
+    volumes:
+      - ./router/entrypoint.sh:/entrypoint.sh:ro
+
+    command: ["/bin/sh", "/entrypoint.sh"]
+
+
+  dnsmasq:
+    image: dockurr/dnsmasq
+    container_name: event-dns
+
+    network_mode: host
+    privileged: true
+
+    restart: unless-stopped
+
+    volumes:
+      - ./dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf:ro
+
+
+  hostapd:
+    image: ghcr.io/linuxserver/hostapd:latest
+    container_name: event-wifi
+
+    network_mode: host
+    privileged: true
+
+    restart: unless-stopped
+
+    volumes:
+      - ./hostapd/hostapd.conf:/etc/hostapd/hostapd.conf:ro
+
+
+  caddy:
+    image: caddy:latest
+    container_name: event-caddy
+
+    network_mode: host
+
+    restart: unless-stopped
+
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

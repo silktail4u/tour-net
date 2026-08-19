@@ -1,0 +1,11 @@
+bracket.event.example.com {
+    reverse_proxy localhost:5000
+}
+
+rules.event.example.com {
+    redir {$RULES_REDIRECT} 302
+}
+
+register.event.example.com {
+    redir {$REGISTER_REDIRECT} 302
+}
