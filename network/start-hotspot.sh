@@ -94,8 +94,8 @@ ip addr add 10.42.0.1/24 dev "$IFACE"
 echo
 echo "=== Configuring NAT ==="
 
-iptables -t nat -F
-iptables -F FORWARD
+#iptables -t nat -F
+#iptables -F FORWARD uncomment if firewall issues, warning: danger!
 
 iptables -t nat -A POSTROUTING \
     -s 10.42.0.0/24 \
