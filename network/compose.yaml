@@ -31,6 +31,21 @@ services:
       STARTGG_EVENT_ID: "${STARTGG_EVENT_ID}"
     networks:
       - tour-net
+  slippi-ftp:
+    build:
+      context: ../services/sharlots-slippi-ftp-server
+      dockerfile: Dockerfile
+      args:
+        - FSURL=slippi-ftp.com/slp-replays
+        - NAME=Konga-Line
+        - USEHTTPS=FALSE
+    container_name: slippi-ftp
+    cap_add:
+      - NET_BIND_SERVICE
+    network_mode: "host"
+    volumes:
+      - ./slp-files:/web/sharlot/public_html/slp-files
+    restart: unless-stopped
 
 networks:
   tour-net:
