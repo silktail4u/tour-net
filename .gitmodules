@@ -1,0 +1,6 @@
+[submodule "services/meleenium"]
+	path = services/meleenium
+	url = https://github.com/silktail4u/Meleenium.git
+[submodule "services/sharlots-slippi-ftp-server"]
+	path = services/sharlots-slippi-ftp-server
+	url = https://github.com/sticks-stuff/sharlots-slippi-ftp-server

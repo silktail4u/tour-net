@@ -18,6 +18,19 @@ services:
       - "5001:5001"
     networks:
       - tour-net
+    depends_on:
+      - meleenium
+
+  meleenium:
+    build:
+      context: ../services/meleenium
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      STARTGG_BEARER: "${STARTGG_BEARER}"
+      STARTGG_EVENT_ID: "${STARTGG_EVENT_ID}"
+    networks:
+      - tour-net
 
 networks:
   tour-net:
