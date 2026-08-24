@@ -6,20 +6,20 @@ services:
     network_mode: host
     privileged: true
     restart: unless-stopped
-    depends_on:
-      - checkin
+    #depends_on:
+    #  - checkin
 
-  checkin:
-    build:
-      context: ..
-      dockerfile: checkin.Dockerfile
-    restart: unless-stopped
-    ports:
-      - "5001:5001"
-    networks:
-      - tour-net
-    depends_on:
-      - meleenium
+  #checkin:
+   # build:
+    #  context: ..
+     # dockerfile: checkin.Dockerfile
+    #restart: unless-stopped
+    #ports:
+    #  - "5001:5001"
+    #networks:
+     # - tour-net
+    #depends_on:
+     # - meleenium
 
   meleenium:
     build:
