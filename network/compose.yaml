@@ -9,28 +9,30 @@ services:
     #depends_on:
     #  - checkin
 
-  #checkin:
-   # build:
-    #  context: ..
-     # dockerfile: checkin.Dockerfile
-    #restart: unless-stopped
-    #ports:
-    #  - "5001:5001"
+  checkin:
+    build:
+      context: ..
+      dockerfile: checkin.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
     #networks:
      # - tour-net
-    #depends_on:
-     # - meleenium
-
+    depends_on:
+      - meleenium
+      - slippi-ftp
+    network_mode: host
+  
   meleenium:
     build:
       context: ../services/meleenium
       dockerfile: Dockerfile
     restart: unless-stopped
+    network_mode: host
     environment:
       STARTGG_BEARER: "${STARTGG_BEARER}"
       STARTGG_EVENT_ID: "${STARTGG_EVENT_ID}"
-    networks:
-      - tour-net
+  
   slippi-ftp:
     build:
       context: ../services/sharlots-slippi-ftp-server
@@ -46,8 +48,3 @@ services:
     volumes:
       - ./slp-files:/web/sharlot/public_html/slp-files
     restart: unless-stopped
-
-networks:
-  tour-net:
-    name: tour-net
-    driver: bridge

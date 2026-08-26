@@ -78,6 +78,10 @@ cat > /etc/dnsmasq.conf <<EOF
 interface=$IFACE
 bind-interfaces
 
+HOTSPOT_IP="$(ip -4 addr show "$IFACE" \
+  | awk '/inet / {print $2}' \
+  | cut -d/ -f1)"
+
 dhcp-range=10.42.0.10,10.42.0.100,255.255.255.0,12h
 
 dhcp-option=3,10.42.0.1
@@ -127,7 +131,8 @@ echo "DHCP range : 10.42.0.10-10.42.0.100"
 echo "================================"
 echo
 
-dnsmasq --keep-in-foreground &
+dnsmasq --interface="$IFACE" --address="/checkin.slippi/$HOTSPOT_IP" --address="/ftp.slippi/$HOTSPOT_IP" --address="/meleenium.slippi/$HOTSPOT_IP" --keep-in-foreground &
+
 DNSMASQ_PID=$!
 
 hostapd /etc/hostapd/hostapd.conf &
