@@ -8,6 +8,12 @@ app = Flask(__name__)
 REPLAYHUB_URL = os.environ["REPLAYHUB_URL"]
 BRACKET_URL = os.environ["BRACKET_URL"]
 
+# Flask service running locally that knows the start.gg entrants.
+BRACKET_API_URL = os.environ.get(
+    "BRACKET_API_URL",
+    "http://127.0.0.1:5000"
+)
+
 
 HTML = """
 <!DOCTYPE html>
@@ -115,6 +121,13 @@ HTML = """
     <div class="container">
         <h1>Station Check-In</h1>
 
+        <label for="nickname">Player Nickname</label>
+        <input
+            type="text"
+            id="nickname"
+            placeholder="Enter player nickname"
+        >
+
         <label for="station">Station</label>
         <select id="station">
             <option value="">Loading stations...</option>
@@ -144,7 +157,8 @@ HTML = """
 
     <script>
         async function loadStations() {
-            const stationSelect = document.getElementById("station");
+            const stationSelect =
+                document.getElementById("station");
 
             try {
                 const response = await fetch("/stations");
@@ -159,7 +173,8 @@ HTML = """
                 stationSelect.innerHTML = "";
 
                 data.stations.forEach(station => {
-                    const option = document.createElement("option");
+                    const option =
+                        document.createElement("option");
 
                     option.value = station;
                     option.textContent = station;
@@ -177,6 +192,9 @@ HTML = """
 
 
         async function checkIn() {
+            const nickname =
+                document.getElementById("nickname").value.trim();
+
             const station =
                 document.getElementById("station").value;
 
@@ -186,13 +204,27 @@ HTML = """
             const button =
                 document.getElementById("checkInButton");
 
+            if (!nickname) {
+                showMessage(
+                    "Please enter the player nickname.",
+                    false
+                );
+                return;
+            }
+
             if (!station) {
-                showMessage("Please select a station.", false);
+                showMessage(
+                    "Please select a station.",
+                    false
+                );
                 return;
             }
 
             if (!port) {
-                showMessage("Please enter a port number.", false);
+                showMessage(
+                    "Please enter a port number.",
+                    false
+                );
                 return;
             }
 
@@ -206,6 +238,7 @@ HTML = """
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
+                        nickname: nickname,
                         station: station,
                         port: Number(port)
                     })
@@ -221,15 +254,20 @@ HTML = """
 
                 showMessage(
                     "Successfully checked in " +
-                    station +
-                    " on port " +
+                    nickname +
+                    " (entrant ID " +
+                    data.entrant_id +
+                    ") on port " +
                     port +
                     ".",
                     true
                 );
 
             } catch (error) {
-                showMessage(error.message, false);
+                showMessage(
+                    error.message,
+                    false
+                );
 
             } finally {
                 button.disabled = false;
@@ -239,9 +277,11 @@ HTML = """
 
 
         function showMessage(message, success) {
-            const element = document.getElementById("message");
+            const element =
+                document.getElementById("message");
 
             element.textContent = message;
+
             element.className = success
                 ? "success"
                 : "error";
@@ -264,6 +304,10 @@ def index():
         bracket_url=BRACKET_URL
     )
 
+
+# ============================================================
+# Get stations from ReplayHub
+# ============================================================
 
 @app.route("/stations", methods=["GET"])
 def stations():
@@ -292,27 +336,98 @@ def stations():
         }), 500
 
 
+# ============================================================
+# Look up entrant ID from the other Flask application
+# ============================================================
+
+def get_entrant_id(nickname):
+    """
+    Ask the bracket Flask service for the start.gg entrant ID
+    associated with a nickname.
+
+    Expected endpoint on the bracket service:
+
+        GET /entrant/<nickname>
+
+    Expected response:
+
+        {
+            "entrant_id": "123456",
+            "nickname": "Player"
+        }
+    """
+
+    response = requests.get(
+        f"{BRACKET_API_URL}/entrant/{requests.utils.quote(nickname)}",
+        timeout=10
+    )
+
+    response.raise_for_status()
+
+    data = response.json()
+
+    entrant_id = data.get("entrant_id")
+
+    if not entrant_id:
+        raise RuntimeError(
+            f"No entrant ID found for nickname '{nickname}'"
+        )
+
+    return str(entrant_id)
+
+
+# ============================================================
+# Check in
+# ============================================================
+
 @app.route("/check-in", methods=["POST"])
 def check_in():
     try:
         data = request.get_json()
 
-        station = data["station"]
-        port = int(data["port"])
+        if not data:
+            raise ValueError(
+                "Request body must contain JSON"
+            )
+
+        nickname = data.get("nickname", "").strip()
+        station = data.get("station", "").strip()
+        port = int(data.get("port"))
+
+        if not nickname:
+            raise ValueError(
+                "Nickname is required"
+            )
 
         if not station:
-            raise ValueError("Station is required")
+            raise ValueError(
+                "Station is required"
+            )
 
         if not 1 <= port <= 65535:
             raise ValueError(
                 "Port must be between 1 and 65535"
             )
 
+        # ----------------------------------------------------
+        # Get entrant ID from the local bracket service
+        # ----------------------------------------------------
+
+        entrant_id = get_entrant_id(
+            nickname
+        )
+
+        # ----------------------------------------------------
+        # Send check-in to ReplayHub
+        # ----------------------------------------------------
+
         response = requests.post(
             REPLAYHUB_URL,
             json={
                 "station": station,
-                "port": port
+                "port": port,
+                "entrant_id": entrant_id,
+                "nickname": nickname
             },
             timeout=10
         )
@@ -321,6 +436,8 @@ def check_in():
 
         return jsonify({
             "success": True,
+            "nickname": nickname,
+            "entrant_id": entrant_id,
             "station": station,
             "port": port,
             "response": (
@@ -329,6 +446,12 @@ def check_in():
                 else None
             )
         }), 200
+
+    except requests.HTTPError as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
     except Exception as e:
         return jsonify({
@@ -340,6 +463,7 @@ def check_in():
 if __name__ == "__main__":
     app.run(
         host="0.0.0.0",
-        port=5001,
+        port=5003,
         threaded=True
     )
+
