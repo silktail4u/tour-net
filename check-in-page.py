@@ -5,8 +5,8 @@ from flask import Flask, jsonify, render_template_string, request
 
 app = Flask(__name__)
 
-REPLAYHUB_URL = os.environ["REPLAYHUB_URL"]
-BRACKET_URL = os.environ["BRACKET_URL"]
+REPLAYHUB_URL = 'http://ftp.slippi:9876'
+BRACKET_URL = 'https://www.start.gg/tournament/ladder-18/event/'
 
 # Flask service running locally that knows the start.gg entrants.
 BRACKET_API_URL = os.environ.get(
