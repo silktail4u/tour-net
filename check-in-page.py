@@ -10,8 +10,8 @@ BRACKET_URL = 'https://www.start.gg/tournament/ladder-18/event/'
 
 # Flask service running locally that knows the start.gg entrants.
 BRACKET_API_URL = os.environ.get(
-    "BRACKET_API_URL",
-    "http://127.0.0.1:5000"
+    "REPORT_API_URL",
+    "meleenium.slippi"
 )
 
 
