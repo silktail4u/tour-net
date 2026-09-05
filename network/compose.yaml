@@ -1,5 +1,6 @@
 services:
   hotspot:
+    user: "0:0"
     build:
       context: .
       dockerfile: hotspot.Dockerfile
