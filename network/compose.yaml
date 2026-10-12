@@ -4,7 +4,7 @@ services:
     build:
       context: .
       dockerfile: hotspot.Dockerfile
-    network_mode: host
+    network_mode: "host"
     privileged: true
     restart: unless-stopped
     #depends_on:
@@ -42,6 +42,7 @@ services:
         - FSURL=slippi-ftp.com/slp-replays
         - NAME=Konga-Line
         - USEHTTPS=FALSE
+    privileged: true
     container_name: slippi-ftp
     cap_add:
       - NET_BIND_SERVICE

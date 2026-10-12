@@ -11,7 +11,7 @@ BRACKET_URL = 'https://www.start.gg/tournament/ladder-18/event/'
 # Flask service running locally that knows the start.gg entrants.
 BRACKET_API_URL = os.environ.get(
     "REPORT_API_URL",
-    "meleenium.slippi"
+    "http://meleenium.slippi:5002"
 )
 
 
@@ -161,18 +161,33 @@ HTML = """
                 document.getElementById("station");
 
             try {
-                const response = await fetch("/stations");
-                const data = await response.json();
-
+                var response = "";
+                try {
+                response = await fetch("http://ftp.slippi:9876/setups");
+                }
+                catch(e){
+                    console.log("caught");
+                }
+                
+                var data = "";
                 if (!response.ok) {
+                    response = await fetch("http://localhost:9876/setups");
+                    console.log(response.ok);
+                    data = await response.json();
+                    console.log(data.consoles + "212121212");
+                    if (!response.ok) {
+                    console.log("err");
                     throw new Error(
                         data.error || "Failed to load stations"
                     );
+                    }
                 }
-
+                
+                
                 stationSelect.innerHTML = "";
-
-                data.stations.forEach(station => {
+                console.log(data.consoles);
+                if(typeof data.consoles.forEach === "function"){
+                data.consoles.forEach(station => {
                     const option =
                         document.createElement("option");
 
@@ -181,10 +196,11 @@ HTML = """
 
                     stationSelect.appendChild(option);
                 });
-
+              }
             } catch (error) {
+                console.log(error);
                 stationSelect.innerHTML =
-                    '<option value="">Failed to load stations</option>';
+                    '<option value="">{error}</option>';
 
                 showMessage(error.message, false);
             }
@@ -232,7 +248,9 @@ HTML = """
             button.textContent = "Checking in...";
 
             try {
-                const response = await fetch("/check-in", {
+                const response = "";
+                try {
+                    response = await fetch("http://ftp.slippi:9876/check-in", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -243,15 +261,32 @@ HTML = """
                         port: Number(port)
                     })
                 });
+                }
+                catch(e){
+                    console.log("caught");
+                }
 
-                const data = await response.json();
-
-                if (!response.ok) {
+                if (!response) {
+                    response = await fetch("http://localhost:9876/check-in", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        nickname: nickname,
+                        station: station,
+                        port: Number(port)
+                    })
+                });
+                    console.log(response);
+                    if(!response)
+                    {
                     throw new Error(
                         data.error || "Check-in failed"
                     );
+                    }
                 }
-
+                
                 showMessage(
                     "Successfully checked in " +
                     nickname +
